@@ -1,0 +1,112 @@
+@startuml name "Citizen Portal"
+left to right direction
+' scale 200*300
+title DOMAIN
+interface GrantedAuthority
+interface UserDetails
+interface UserDetailsService
+package domain {
+    package service {
+        interface AuthenticationServiceInterface {
+            setIdentifierUsed(identifier : Identier): void
+            setRole(user:User, roles: List): void
+            register(identifier : Identifier, user : User): User  
+            login(identifier : string, password:string): User
+        }
+        interface IdeaServiceInterface {
+            createIdea(userId : int, idea : Idea) : Idea
+            createIdea(userId : int, idea : Idea, categories : list<Category>) : Idea
+            updateIdea(ideaId : int, userId : id , idea : Idea) : Idea
+            updateStatus(ideaId : int, status: boolean) : void
+            addCategory(idea : Idea, category : Category) : void
+            removeCategory(idea : Idea, category : Category) : void
+            closeIdea(idea : Idea) : void
+            toProject(userId : int, ideaId : int, votationEndDate: Date) : Project
+        }
+        interface ProjectServiceInterface {
+            startVote(projectId : int, endDate : Date) : void    
+            updateStatus(projectId : int, status: boolean) : void
+            countVotes(projectId : int): void    
+            submitProject(title : string, description : string, idUser : int, endDate : Date) : void
+        }
+        interface UserServiceInterface {
+            getUserByIdentifier(identifier : Identifier): User
+            createUser(user : User): User
+            updateUser(identifier : Identifier, User : user): User
+            deleteUser(identifier:Identifier): void
+        }
+        interface VoteServiceInterface {
+            createVote(identifier : Identifier, value : boolean, idea : Idea) : Vote
+        }
+        interface DiscussionServiceInterface {
+            postToSubject(user: User, idea : Idea) : discussion
+            respondsToDiscussion(user: User, discussion : Discussion) : discussion
+            editDiscussion(discussionId int, user: User, discussion Discussion) : discussion
+            deleteDiscussion(discussionId int, user: User, discussion Discussion) : discussion
+        }
+        UserDetailsService <|-down- AuthenticationServiceInterface
+    }
+    package entity {
+        class Identifier {
+            - login : string
+            - isUsed : boolean
+        }
+        class Role {
+            - authority : string
+        }
+        class User {
+            - id : int
+            - identifier : Identifier
+            - password : string
+            - roles : List<Role>
+            - firstname : string
+            - lastname : string
+            - email : string
+            - address : string
+            - createdAt : Date
+        }
+        class Vote {
+            - id : int
+            - value : boolean
+            - emitBy : Identifier
+            - createdAt : Date
+        }
+        class Idea {
+            # id : int
+            # title : string
+            # content : string
+            # author : User
+            # submitedAt : Date
+            # status : boolean
+        }
+        class Category {
+            - id : int
+            - title : string
+            - description : string
+        }
+        class Project {
+            - votationCloseAt : Date
+        }
+        class Discussion {
+            - id : int
+            - message : string
+            - respondsTo : Discussion
+            - author : User
+            - createdAt : Date
+            - isHide : boolean
+        }
+        User "1" *-left- "0..1" Identifier : compose
+        User "*" *-left- "*" Role : have many
+        User "1" -left- "0..*" Idea : post many
+        User "1" -- "*" Vote : cast
+        Vote "*" -right- "1" Idea : concern
+        User "1" -- "*" Discussion : post many
+        Discussion "0..*" -right- "1" Idea : belongs to
+        Category "*" -up- "*" Idea : have many
+        Idea <|-down- Project
+
+        GrantedAuthority <|.down. Role
+        UserDetails <|.down. User
+    }
+}
+@enduml
